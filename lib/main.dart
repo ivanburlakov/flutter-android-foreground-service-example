@@ -29,19 +29,24 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   static const platform = const MethodChannel('example_service');
-  bool _serviceIsRunning = false;
+  String _serverState = 'Did not make the call yet';
 
-  Future<void> _toggleService() async {
+  Future<void> _startService() async {
     try {
-      String methodName =
-          !_serviceIsRunning ? 'startExampleService' : 'stopExampleService';
-      final result = await platform.invokeMethod(methodName);
+      final result = await platform.invokeMethod('startExampleService');
       setState(() {
-        if ('$result' == 'Started!') {
-          _serviceIsRunning = true;
-        } else if ('$result' == 'Stopped!') {
-          _serviceIsRunning = false;
-        }
+        _serverState = result;
+      });
+    } on PlatformException catch (e) {
+      print("Failed to invoke method: '${e.message}'.");
+    }
+  }
+
+  Future<void> _stopService() async {
+    try {
+      final result = await platform.invokeMethod('stopExampleService');
+      setState(() {
+        _serverState = result;
       });
     } on PlatformException catch (e) {
       print("Failed to invoke method: '${e.message}'.");
@@ -55,11 +60,19 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: ElevatedButton(
-          child: Text(
-            !_serviceIsRunning ? 'Start Service' : 'Stop Service',
-          ),
-          onPressed: _toggleService,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(_serverState),
+            ElevatedButton(
+              child: Text('Start Service'),
+              onPressed: _startService,
+            ),
+            ElevatedButton(
+              child: Text('Stop Service'),
+              onPressed: _stopService,
+            ),
+          ],
         ),
       ),
     );
